@@ -1,0 +1,2 @@
+﻿computernaam,computermodel,processor,aantal_fysieke_cpu_cores,maximale_cpu_frequentie_mhz,totale_hoeveelheid_ram_gb,bestandssysteem_opslag,opslagcapaciteit_gb,mac_adres_primaire_nic,ipv4_adres_primaire_nic,ipv6_adres_primaire_nic,ipv6_link_local_adres_primaire_nic
+DESK-356897,AMD64,"Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",4,2803.0,15.79,NTFS,475.53,B0-3C-DC-95-40-25,10.109.192.91,N/A,fe80::e3eb:f705:ac9d:8fdd

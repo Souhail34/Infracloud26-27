@@ -1,0 +1,14 @@
+{
+    "computernaam": "DESK-356897",
+    "computermodel": "AMD64",
+    "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+    "aantal_fysieke_cpu_cores": 4,
+    "maximale_cpu_frequentie_mhz": 2803.0,
+    "totale_hoeveelheid_ram_gb": 15.79,
+    "bestandssysteem_opslag": "NTFS",
+    "opslagcapaciteit_gb": 475.53,
+    "mac_adres_primaire_nic": "B0-3C-DC-95-40-25",
+    "ipv4_adres_primaire_nic": "10.109.192.91",
+    "ipv6_adres_primaire_nic": null,
+    "ipv6_link_local_adres_primaire_nic": "fe80::e3eb:f705:ac9d:8fdd"
+}

@@ -1,0 +1,142 @@
+## 4 - Transformeren van informatie naar CSV
+## De gefilterde informatie bevindt zich momenteel in een Python dict. In deze opdracht transformeer je deze gegevens naar een CSV-bestand (Comma-Separated Values) dat in een spreadsheetprogramma kan worden geopend.
+## - Bepaal een geschikte bestandsnaam.
+## - Bepaal welke informatie je in de kolommen wilt opnemen en kies duidelijke kolomnamen.
+## - Bepaal hoe de informatie over één computer als één rij in het CSV-bestand kan worden voorgesteld.
+## - Transformeer de informatie uit de Python dictionary naar een tabelstructuur die geschikt is voor CSV.
+## - Schrijf de gegevens met Python naar een .csv-bestand.
+## - Open het CSV-bestand in een spreadsheetprogramma en controleer of de gegevens correct worden weergegeven.
+## - Zorg ervoor dat je script het CSV-bestand later opnieuw kan inlezen.
+
+#Denk hierbij na over:
+## - Welk scheidingsteken gebruik je in het CSV-bestand?
+## - Hoe ga je om met ontbrekende informatie?
+## - Hoe ga je om met informatie waarvan een computer meerdere exemplaren kan hebben, zoals disks of netwerkinterfaces?
+## - Hoe zorg je ervoor dat het CSV-bestand correct kan worden geopend in je spreadsheetprogramma?
+
+
+
+import csv
+import json
+import platform
+from pprint import pprint
+import socket
+import psutil
+
+
+def get_primary_interface_info():
+  """Identificeert de actieve netwerkinterface naar buiten."""
+  try:
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(('8.8.8.8', 80))
+    active_ip = s.getsockname()[0]
+    s.close()
+  except Exception:
+    active_ip = '127.0.0.1'
+
+  primary_nic = None
+  addrs = psutil.net_if_addrs()
+  for nic, addr_list in addrs.items():
+    for addr in addr_list:
+      if addr.family == socket.AF_INET and addr.address == active_ip:
+        primary_nic = nic
+        break
+    if primary_nic:
+      break
+
+  mac = None
+  ipv4 = None
+  ipv6_global = None
+  ipv6_link_local = None
+
+  if primary_nic and primary_nic in addrs:
+    for addr in addrs[primary_nic]:
+      if addr.family == psutil.AF_LINK:
+        mac = addr.address
+      elif addr.family == socket.AF_INET:
+        ipv4 = addr.address
+      elif addr.family == socket.AF_INET6:
+        clean_ip = addr.address.split('%')[0]
+        if clean_ip.lower().startswith('fe80:'):
+          ipv6_link_local = clean_ip
+        else:
+          ipv6_global = clean_ip
+
+  return mac, ipv4, ipv6_global, ipv6_link_local
+
+
+def filter_system_info():
+  root_mount = 'C:\\' if platform.system() == 'Windows' else '/'
+  disk_fs = 'Onbekend'
+  for part in psutil.disk_partitions(all=False):
+    if part.mountpoint == root_mount:
+      disk_fs = part.fstype
+      break
+
+  disk_usage = psutil.disk_usage(root_mount)
+  disk_total_gb = round(disk_usage.total / (1024**3), 2)
+  mac, ipv4, ipv6_global, ipv6_ll = get_primary_interface_info()
+  freq = psutil.cpu_freq()
+  max_freq_mhz = round(freq.max, 2) if freq else None
+  ram_gb = round(psutil.virtual_memory().total / (1024**3), 2)
+
+  return {
+      'computernaam': platform.node(),
+      'computermodel': platform.machine(),
+      'processor': platform.processor(),
+      'aantal_fysieke_cpu_cores': psutil.cpu_count(logical=False),
+      'maximale_cpu_frequentie_mhz': max_freq_mhz,
+      'totale_hoeveelheid_ram_gb': ram_gb,
+      'bestandssysteem_opslag': disk_fs,
+      'opslagcapaciteit_gb': disk_total_gb,
+      'mac_adres_primaire_nic': mac,
+      'ipv4_adres_primaire_nic': ipv4,
+      'ipv6_adres_primaire_nic': ipv6_global,
+      'ipv6_link_local_adres_primaire_nic': ipv6_ll,
+  }
+
+
+if __name__ == '__main__':
+  # STAP 1: Resultaat ophalen (voorkomt de NameError)
+  resultaat = filter_system_info()
+
+  # STAP 2: CSV wegschrijven
+  csv_bestandsnaam = 'systeeminformatie.csv'
+  kolomnamen = [
+      'computernaam',
+      'computermodel',
+      'processor',
+      'aantal_fysieke_cpu_cores',
+      'maximale_cpu_frequentie_mhz',
+      'totale_hoeveelheid_ram_gb',
+      'bestandssysteem_opslag',
+      'opslagcapaciteit_gb',
+      'mac_adres_primaire_nic',
+      'ipv4_adres_primaire_nic',
+      'ipv6_adres_primaire_nic',
+      'ipv6_link_local_adres_primaire_nic',
+  ]
+
+  rij_data = {}
+  for veld in kolomnamen:
+    waarde = resultaat.get(veld)
+    rij_data[veld] = 'N/A' if waarde is None else waarde
+
+  with open(
+      csv_bestandsnaam, mode='w', newline='', encoding='utf-8-sig'
+  ) as csv_bestand:
+    writer = csv.DictWriter(csv_bestand, fieldnames=kolomnamen, delimiter=',')
+    writer.writeheader()
+    writer.writerow(rij_data)
+
+  print(f'Gegevens succesvol weggeschreven naar {csv_bestandsnaam}')
+
+  # STAP 3: CSV opnieuw inlezen ter controle
+  ingelezen_csv_data = []
+  with open(csv_bestandsnaam, mode='r', encoding='utf-8-sig') as csv_bestand:
+    reader = csv.DictReader(csv_bestand, delimiter=',')
+    for row in reader:
+      ingelezen_csv_data.append(dict(row))
+
+  print('\n--- INGELEZEN DATA UIT CSV ---')
+  print(ingelezen_csv_data)
